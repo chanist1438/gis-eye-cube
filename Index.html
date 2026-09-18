@@ -1,0 +1,781 @@
+<!DOCTYPE html>
+<html lang="th" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GIS Eye Cube | AI-Powered Earth Observation</title>
+    
+    <!-- Google Fonts: Inter & Prompt for Thai -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Tailwind Configuration & Custom CSS -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Prompt', 'Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        deepspace: '#050508',
+                        darkpanel: '#0f111a',
+                        neon: {
+                            400: '#2dd4bf', // Teal 400
+                            500: '#14b8a6', // Teal 500
+                        }
+                    },
+                    backgroundImage: {
+                        'hero-glow': 'radial-gradient(circle at 50% 100%, rgba(45, 212, 191, 0.15) 0%, rgba(5, 5, 8, 1) 60%)',
+                        'grid-pattern': 'linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px)',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #050508;
+            color: #f8fafc;
+            overflow-x: hidden;
+        }
+
+        /* Language Toggle System */
+        body.lang-th .lang-en { display: none !important; }
+        body.lang-en .lang-th { display: none !important; }
+        
+        .bg-grid {
+            background-size: 40px 40px;
+            background-image: linear-gradient(rgba(45, 212, 191, 0.03) 1px, transparent 1px), 
+                              linear-gradient(90deg, rgba(45, 212, 191, 0.03) 1px, transparent 1px);
+        }
+
+        /* Glassmorphism utilities */
+        .glass {
+            background: rgba(15, 17, 26, 0.6);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(45, 212, 191, 0.1);
+        }
+        
+        /* Accordion transition */
+        .accordion-content {
+            transition: max-height 0.3s ease-out, opacity 0.3s ease-out, padding 0.3s ease;
+            max-height: 0;
+            opacity: 0;
+            overflow: hidden;
+        }
+        .accordion-content.active {
+            max-height: 350px;
+            opacity: 1;
+        }
+
+        /* Animated glowing line for stepper */
+        .stepper-line {
+            position: absolute;
+            left: 50%;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: linear-gradient(to bottom, transparent, rgba(45, 212, 191, 0.5), transparent);
+            transform: translateX(-50%);
+        }
+        
+        @media (max-width: 768px) {
+            .stepper-line {
+                left: 24px;
+                transform: none;
+            }
+        }
+    </style>
+</head>
+<body class="antialiased selection:bg-neon-500 selection:text-deepspace lang-th">
+
+    <header id="navbar" class="fixed top-0 w-full z-50 transition-all duration-300 border-b border-transparent">
+        <div class="max-w-7xl mx-auto px-6 lg:px-8">
+            <div class="flex items-center justify-between h-20">
+                <!-- Logo -->
+                <div class="flex-shrink-0 flex items-center gap-2 cursor-pointer">
+                    <div class="w-8 h-8 rounded bg-gradient-to-br from-neon-400 to-blue-600 flex items-center justify-center">
+                        <i class="fa-solid fa-cube text-deepspace font-bold"></i>
+                    </div>
+                    <span class="font-bold text-xl tracking-wide text-white">GIS Eye Cube</span>
+                </div>
+                
+                <!-- Desktop Nav -->
+                <nav class="hidden md:flex space-x-6 lg:space-x-8">
+                    <a href="#technology" class="text-gray-300 hover:text-neon-400 transition-colors text-sm font-medium">
+                        <span class="lang-th">เทคโนโลยี</span><span class="lang-en">Technology</span>
+                    </a>
+                    <a href="#solutions" class="text-gray-300 hover:text-neon-400 transition-colors text-sm font-medium">
+                        <span class="lang-th">โซลูชัน</span><span class="lang-en">Solutions</span>
+                    </a>
+                    <a href="#applications" class="text-gray-300 hover:text-neon-400 transition-colors text-sm font-medium">
+                        <span class="lang-th">การประยุกต์ใช้งาน</span><span class="lang-en">Applications</span>
+                    </a>
+                    <a href="#satellites" class="text-gray-300 hover:text-neon-400 transition-colors text-sm font-medium">
+                        <span class="lang-th">ดาวเทียมและข้อมูล</span><span class="lang-en">Satellites & Data</span>
+                    </a>
+                    <a href="#faq" class="text-gray-300 hover:text-neon-400 transition-colors text-sm font-medium">
+                        <span class="lang-th">คำถามที่พบบ่อย</span><span class="lang-en">FAQ</span>
+                    </a>
+                </nav>
+                
+                <!-- CTA & Lang Button -->
+                <div class="hidden md:flex items-center gap-4">
+                    <button id="langToggle" class="text-gray-300 hover:text-neon-400 text-sm font-semibold transition-colors flex items-center gap-2 border border-white/10 rounded-full px-3 py-1 bg-white/5 hover:bg-white/10">
+                        <i class="fa-solid fa-globe"></i>
+                        <span class="lang-th">EN</span>
+                        <span class="lang-en">TH</span>
+                    </button>
+                    <a href="#contact" class="px-5 py-2.5 rounded-md bg-white/5 hover:bg-white/10 border border-white/10 hover:border-neon-400/50 text-white text-sm font-medium transition-all shadow-[0_0_15px_rgba(45,212,191,0.1)] hover:shadow-[0_0_20px_rgba(45,212,191,0.3)]">
+                        <span class="lang-th">เริ่มต้นใช้งาน</span>
+                        <span class="lang-en">Get Started</span>
+                    </a>
+                </div>
+
+                <!-- Mobile menu button -->
+                <div class="md:hidden flex items-center gap-4">
+                    <button id="langToggleMobile" class="text-gray-300 hover:text-neon-400 text-sm font-semibold border border-white/10 rounded-full px-3 py-1 bg-white/5">
+                        <span class="lang-th">EN</span>
+                        <span class="lang-en">TH</span>
+                    </button>
+                    <button class="text-gray-300 hover:text-white focus:outline-none">
+                        <i class="fa-solid fa-bars text-2xl"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <section class="relative min-h-screen flex items-center justify-center pt-20 overflow-hidden">
+        <!-- Background Effects -->
+        <div class="absolute inset-0 bg-hero-glow z-0"></div>
+        <div class="absolute inset-0 bg-grid z-0 opacity-40"></div>
+        
+        <!-- Decorative Orb -->
+        <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-neon-500/10 rounded-full blur-[120px] pointer-events-none z-0"></div>
+
+        <div class="relative z-10 max-w-5xl mx-auto px-6 lg:px-8 text-center flex flex-col items-center">
+            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-neon-400/10 border border-neon-400/20 text-neon-400 text-xs font-semibold uppercase tracking-wider mb-8">
+                <span class="w-2 h-2 rounded-full bg-neon-400 animate-pulse"></span>
+                <span class="lang-th">นวัตกรรมสำรวจโลกแห่งอนาคต</span>
+                <span class="lang-en">Future Earth Observation Innovation</span>
+            </div>
+            
+            <h1 class="text-4xl md:text-6xl lg:text-7xl font-extrabold tracking-tight mb-6 leading-tight">
+                <span class="lang-th">แพลตฟอร์มสังเกตการณ์โลก <br/></span>
+                <span class="lang-en">Earth Observation Platform <br/></span>
+                <span class="text-transparent bg-clip-text bg-gradient-to-r from-white via-gray-200 to-gray-500">
+                    <span class="lang-th">อัจฉริยะด้วย AI</span>
+                    <span class="lang-en">Powered by AI</span>
+                </span>
+            </h1>
+            
+            <p class="text-lg md:text-xl text-gray-400 max-w-3xl mx-auto mb-10 leading-relaxed">
+                <span class="lang-th">เปลี่ยนข้อมูลภาพถ่ายดาวเทียมที่ซับซ้อนให้เป็นข้อมูลเชิงลึกที่นำไปปฏิบัติได้จริงแบบเรียลไทม์ เพื่อการเฝ้าระวัง คาดการณ์ และรับมือกับสถานการณ์ต่างๆ ได้รวดเร็วยิ่งขึ้น</span>
+                <span class="lang-en">Transform complex satellite imagery into actionable, real-time insights to monitor, predict, and respond to global situations faster than ever before.</span>
+            </p>
+            
+            <div class="flex flex-col sm:flex-row gap-4 justify-center w-full sm:w-auto">
+                <a href="#contact" class="px-8 py-4 rounded-md bg-neon-500 hover:bg-neon-400 text-deepspace font-bold transition-all hover:scale-105 shadow-[0_0_30px_rgba(45,212,191,0.3)]">
+                    <span class="lang-th">รับสิทธิ์ใช้งานก่อนใคร</span>
+                    <span class="lang-en">Get Early Access</span>
+                </a>
+                <a href="#technology" class="px-8 py-4 rounded-md glass hover:bg-white/10 text-white font-medium transition-all group flex items-center justify-center gap-2">
+                    <span class="lang-th">เรียนรู้เพิ่มเติม</span>
+                    <span class="lang-en">Learn More</span> 
+                    <i class="fa-solid fa-arrow-right group-hover:translate-x-1 transition-transform"></i>
+                </a>
+            </div>
+
+            <div class="mt-16 w-full max-w-5xl mx-auto rounded-xl overflow-hidden border border-white/10 shadow-[0_0_50px_rgba(45,212,191,0.15)] relative group">
+                <div class="absolute inset-0 bg-gradient-to-t from-deepspace via-deepspace/40 to-transparent z-10"></div>
+                
+                <!-- Interface Overlay UI -->
+                <div class="absolute top-4 left-4 z-20 flex items-center gap-2 px-3 py-1.5 bg-black/60 backdrop-blur-md rounded border border-white/10 text-xs font-mono text-neon-400">
+                    <span class="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span> LIVE: 13.7563° N, 100.5018° E
+                </div>
+                <div class="absolute bottom-4 right-4 z-20 text-xs font-mono text-gray-300 bg-black/60 backdrop-blur-md px-3 py-1.5 rounded border border-white/10">
+                    HIGH-RES: 0.5m / PIXEL
+                </div>
+                
+                <!-- High-res Earth Image -->
+                <img src="https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=1200&auto=format&fit=crop" alt="High Resolution Earth Imagery" class="w-full h-[250px] md:h-[400px] object-cover opacity-80 group-hover:opacity-100 group-hover:scale-105 transition-all duration-1000">
+            </div>
+        </div>
+        
+        <!-- Scroll indicator -->
+        <div class="absolute bottom-6 left-1/2 -translate-x-1/2 animate-bounce opacity-50 z-10">
+            <i class="fa-solid fa-chevron-down text-white text-xl"></i>
+        </div>
+    </section>
+
+    <section id="technology" class="py-24 relative z-10">
+        <div class="max-w-7xl mx-auto px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl md:text-4xl font-bold mb-4">
+                    <span class="lang-th">เสริมพลังการตัดสินใจด้วยความแม่นยำ</span>
+                    <span class="lang-en">Empower Decisions with Precision</span>
+                </h2>
+                <p class="text-gray-400 max-w-2xl mx-auto">
+                    <span class="lang-th">แพลตฟอร์มของเราเชื่อมช่องโหว่ระหว่างข้อมูลดิบจากวงโคจร สู่การนำไปประยุกต์ใช้เชิงกลยุทธ์บนภาคพื้นดิน</span>
+                    <span class="lang-en">Our platform bridges the gap between raw orbital data and strategic ground-level applications.</span>
+                </p>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <!-- Feature 1 -->
+                <div class="glass p-8 rounded-xl hover:-translate-y-2 transition-transform duration-300 group">
+                    <div class="w-12 h-12 rounded-lg bg-neon-400/10 flex items-center justify-center mb-6 border border-neon-400/20 group-hover:bg-neon-400/20 transition-colors">
+                        <i class="fa-solid fa-brain text-neon-400 text-xl"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold text-white mb-3">
+                        <span class="lang-th">ข้อมูลเชิงลึกที่ใช้ได้จริง</span>
+                        <span class="lang-en">Actionable Insights</span>
+                    </h3>
+                    <p class="text-gray-400 text-sm leading-relaxed">
+                        <span class="lang-th">ข้ามขั้นตอนข้อมูลดิบที่ซับซ้อน รับข้อมูลสรุปอัจฉริยะที่พร้อมสำหรับการประยุกต์ใช้ในกลยุทธ์ของคุณทันที</span>
+                        <span class="lang-en">Skip the complex raw data processing. Receive intelligent summaries ready for immediate strategic application.</span>
+                    </p>
+                </div>
+                
+                <!-- Feature 2 -->
+                <div class="glass p-8 rounded-xl hover:-translate-y-2 transition-transform duration-300 group">
+                    <div class="w-12 h-12 rounded-lg bg-neon-400/10 flex items-center justify-center mb-6 border border-neon-400/20 group-hover:bg-neon-400/20 transition-colors">
+                        <i class="fa-solid fa-bolt text-neon-400 text-xl"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold text-white mb-3">
+                        <span class="lang-th">อัปเดตเกือบเรียลไทม์</span>
+                        <span class="lang-en">Near Real-Time Updates</span>
+                    </h3>
+                    <p class="text-gray-400 text-sm leading-relaxed">
+                        <span class="lang-th">ตัดสินใจได้ทันท่วงทีด้วยการติดตามผลอย่างต่อเนื่องและระบบส่งผ่านข้อมูลความหน่วงต่ำจากวงโคจรสู่หน้าจอของคุณ</span>
+                        <span class="lang-en">Make timely decisions with continuous monitoring and low-latency data transmission from orbit to your screen.</span>
+                    </p>
+                </div>
+
+                <!-- Feature 3 -->
+                <div class="glass p-8 rounded-xl hover:-translate-y-2 transition-transform duration-300 group">
+                    <div class="w-12 h-12 rounded-lg bg-neon-400/10 flex items-center justify-center mb-6 border border-neon-400/20 group-hover:bg-neon-400/20 transition-colors">
+                        <i class="fa-solid fa-chart-line text-neon-400 text-xl"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold text-white mb-3">
+                        <span class="lang-th">การวิเคราะห์เชิงคาดการณ์</span>
+                        <span class="lang-en">Predictive Analytics</span>
+                    </h3>
+                    <p class="text-gray-400 text-sm leading-relaxed">
+                        <span class="lang-th">คาดการณ์ความเสี่ยงก่อนที่จะเกิดขึ้นจริง โมเดล AI ของเราสามารถตรวจจับความผิดปกติและแนวโน้มการเปลี่ยนแปลงของสิ่งแวดล้อมได้</span>
+                        <span class="lang-en">Anticipate risks before they happen. Our AI models detect anomalies and environmental change trends.</span>
+                    </p>
+                </div>
+
+                <!-- Feature 4 -->
+                <div class="glass p-8 rounded-xl hover:-translate-y-2 transition-transform duration-300 group">
+                    <div class="w-12 h-12 rounded-lg bg-neon-400/10 flex items-center justify-center mb-6 border border-neon-400/20 group-hover:bg-neon-400/20 transition-colors">
+                        <i class="fa-solid fa-bell text-neon-400 text-xl"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold text-white mb-3">
+                        <span class="lang-th">การแจ้งเตือนแบบกำหนดเอง</span>
+                        <span class="lang-en">Custom Alerts</span>
+                    </h3>
+                    <p class="text-gray-400 text-sm leading-relaxed">
+                        <span class="lang-th">กำหนดเงื่อนไขเฉพาะสำหรับพื้นที่ที่คุณสนใจ (AOI) และรับการแจ้งเตือนแบบเจาะจงได้ในทันที</span>
+                        <span class="lang-en">Set specific conditions for your Areas of Interest (AOI) and receive targeted notifications instantly.</span>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="satellites" class="py-24 bg-darkpanel/80 relative border-y border-white/5">
+        <div class="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] opacity-20"></div>
+        <div class="max-w-7xl mx-auto px-6 lg:px-8 relative z-10">
+            <div class="text-center mb-16">
+                <span class="text-neon-400 font-semibold tracking-wider text-sm uppercase">Sources of Truth</span>
+                <h2 class="text-3xl md:text-4xl font-bold mt-2 mb-4">
+                    <span class="lang-th">ดาวเทียมและแหล่งข้อมูลเปิด</span>
+                    <span class="lang-en">Satellites & Open Data</span>
+                </h2>
+                <p class="text-gray-400 max-w-2xl mx-auto">
+                    <span class="lang-th">ดึงพลังจากเครือข่ายดาวเทียมชั้นนำระดับโลก เพื่อวิเคราะห์และติดตามโลกใบนี้อย่างแม่นยำตลอด 24 ชั่วโมง</span>
+                    <span class="lang-en">Harnessing the power of the world's leading satellite networks to accurately analyze and monitor the globe 24/7.</span>
+                </p>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <!-- Sentinel-1 Card -->
+                <div class="glass rounded-2xl border border-white/10 hover:border-neon-400/40 transition-all duration-500 hover:shadow-[0_0_30px_rgba(45,212,191,0.15)] relative overflow-hidden group flex flex-col">
+                    <div class="h-48 w-full relative overflow-hidden">
+                        <div class="absolute inset-0 bg-gradient-to-b from-transparent to-[#0f111a] opacity-90 z-10"></div>
+                        <img src="https://images.unsplash.com/photo-1446776811953-b23d57bd21aa?q=80&w=600&auto=format&fit=crop" alt="Sentinel Satellite in Space" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 mix-blend-lighten">
+                    </div>
+                    <div class="p-8 pt-0 relative z-20 flex-grow">
+                        <div class="absolute top-0 right-0 w-32 h-32 bg-neon-400/10 rounded-full blur-[50px] group-hover:bg-neon-400/20 transition-colors"></div>
+                        <div class="w-14 h-14 rounded-full bg-darkpanel border border-neon-400/30 flex items-center justify-center mb-6 relative z-10 -mt-7 shadow-lg">
+                            <i class="fa-solid fa-satellite-dish text-neon-400 text-xl"></i>
+                        </div>
+                        <h3 class="text-2xl font-bold text-white mb-2 relative z-10">Sentinel-1</h3>
+                        <div class="text-neon-400 text-sm font-medium mb-4 relative z-10">Radar / SAR Imagery</div>
+                        <p class="text-gray-400 text-sm leading-relaxed relative z-10">
+                            <span class="lang-th">ดาวเทียมระบบเรดาร์ (Synthetic Aperture Radar) ที่มีคุณสมบัติสามารถถ่ายภาพทะลุเมฆได้ ทำงานได้อย่างเต็มประสิทธิภาพใน <strong>ทุกสภาพอากาศและตลอด 24 ชั่วโมง (Day/Night)</strong> เหมาะอย่างยิ่งสำหรับการติดตามการเปลี่ยนแปลงของพื้นผิวโลก</span>
+                            <span class="lang-en">Synthetic Aperture Radar (SAR) satellite capable of imaging through clouds. Operates at full efficiency in <strong>all weather conditions and 24/7 (Day/Night)</strong>. Ideal for surface deformation monitoring.</span>
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Sentinel-2 Card -->
+                <div class="glass rounded-2xl border border-white/10 hover:border-green-400/40 transition-all duration-500 hover:shadow-[0_0_30px_rgba(74,222,128,0.15)] relative overflow-hidden group flex flex-col">
+                    <div class="h-48 w-full relative overflow-hidden">
+                        <div class="absolute inset-0 bg-gradient-to-b from-transparent to-[#0f111a] opacity-90 z-10"></div>
+                        <img src="https://images.unsplash.com/photo-1565261902277-2f3b89e7011d?q=80&w=600&auto=format&fit=crop" alt="Sentinel-2 Earth Imagery" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700">
+                    </div>
+                    <div class="p-8 pt-0 relative z-20 flex-grow">
+                        <div class="absolute top-0 right-0 w-32 h-32 bg-green-400/10 rounded-full blur-[50px] group-hover:bg-green-400/20 transition-colors"></div>
+                        <div class="w-14 h-14 rounded-full bg-darkpanel border border-green-400/30 flex items-center justify-center mb-6 relative z-10 -mt-7 shadow-lg">
+                            <i class="fa-solid fa-leaf text-green-400 text-xl"></i>
+                        </div>
+                        <h3 class="text-2xl font-bold text-white mb-2 relative z-10">Sentinel-2</h3>
+                        <div class="text-green-400 text-sm font-medium mb-4 relative z-10">Multispectral Imagery</div>
+                        <p class="text-gray-400 text-sm leading-relaxed relative z-10">
+                            <span class="lang-th">ดาวเทียมถ่ายภาพหลายช่วงคลื่น (Multispectral) ความละเอียดสูง ที่ให้ข้อมูลภาพถ่ายทางแสงในหลากหลายสเปกตรัม ออกแบบมาสำหรับการติดตามการเจริญเติบโตของการเกษตร พื้นที่ป่าไม้ และการตรวจสอบสิ่งแวดล้อมอย่างแม่นยำ</span>
+                            <span class="lang-en">High-resolution multispectral imaging satellite providing optical data across various spectrums. Designed for precise monitoring of agricultural growth, forestry, and environmental assessment.</span>
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Open Data Card -->
+                <div class="glass rounded-2xl border border-white/10 hover:border-blue-400/40 transition-all duration-500 hover:shadow-[0_0_30px_rgba(96,165,250,0.15)] relative overflow-hidden group flex flex-col">
+                    <div class="h-48 w-full relative overflow-hidden">
+                        <div class="absolute inset-0 bg-gradient-to-b from-transparent to-[#0f111a] opacity-90 z-10"></div>
+                        <img src="https://images.unsplash.com/photo-1524661135-423995f22d0b?q=80&w=600&auto=format&fit=crop" alt="High Resolution Open Data Map" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700">
+                    </div>
+                    <div class="p-8 pt-0 relative z-20 flex-grow">
+                        <div class="absolute top-0 right-0 w-32 h-32 bg-blue-400/10 rounded-full blur-[50px] group-hover:bg-blue-400/20 transition-colors"></div>
+                        <div class="w-14 h-14 rounded-full bg-darkpanel border border-blue-400/30 flex items-center justify-center mb-6 relative z-10 -mt-7 shadow-lg">
+                            <i class="fa-solid fa-earth-americas text-blue-400 text-xl"></i>
+                        </div>
+                        <h3 class="text-2xl font-bold text-white mb-2 relative z-10">Open Data</h3>
+                        <div class="text-blue-400 text-sm font-medium mb-4 relative z-10">High-Res Accessible Data</div>
+                        <p class="text-gray-400 text-sm leading-relaxed relative z-10">
+                            <span class="lang-th">การบูรณาการคลังข้อมูลภาพถ่ายดาวเทียมแบบเปิด (Open Data) จากองค์กรชั้นนำทั่วโลก นำมาผสานเข้ากับ AI ของเรา เพื่อเพิ่มมิติในการวิเคราะห์ ทำให้ได้ข้อมูลเชิงลึกที่ครอบคลุม ถูกต้อง และเข้าถึงได้ง่าย</span>
+                            <span class="lang-en">Integrating open-source satellite imagery archives from leading global organizations with our AI to add analytical dimensions, resulting in comprehensive, accurate, and accessible insights.</span>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="solutions" class="py-24 relative">
+        <div class="max-w-7xl mx-auto px-6 lg:px-8 relative">
+            <div class="text-center mb-20">
+                <h2 class="text-3xl md:text-4xl font-bold mb-4">
+                    <span class="lang-th">GIS Eye Cube ทำงานอย่างไร</span>
+                    <span class="lang-en">How GIS Eye Cube Works</span>
+                </h2>
+                <p class="text-gray-400 max-w-2xl mx-auto">
+                    <span class="lang-th">ระบบส่งผ่านข้อมูลที่ไร้รอยต่อ จากขอบอวกาศสู่ศูนย์บัญชาการของคุณ</span>
+                    <span class="lang-en">A seamless data pipeline from the edge of space to your command center.</span>
+                </p>
+            </div>
+
+            <div class="relative max-w-4xl mx-auto">
+                <!-- Vertical Line -->
+                <div class="stepper-line"></div>
+
+                <div class="space-y-12">
+                    <!-- Step 1 -->
+                    <div class="relative flex md:justify-between items-center w-full md:even:flex-row-reverse group">
+                        <div class="hidden md:block w-5/12"></div>
+                        <div class="absolute left-6 md:left-1/2 -translate-x-1/2 w-10 h-10 rounded-full bg-deepspace border-2 border-neon-500 flex items-center justify-center z-10 group-hover:shadow-[0_0_15px_rgba(45,212,191,0.5)] transition-shadow">
+                            <span class="text-neon-400 font-bold">1</span>
+                        </div>
+                        <div class="w-full md:w-5/12 pl-20 md:pl-0">
+                            <div class="glass p-6 rounded-xl relative">
+                                <h4 class="text-xl font-semibold text-white mb-2">
+                                    <span class="lang-th">การรวบรวมข้อมูล</span>
+                                    <span class="lang-en">Data Collection</span>
+                                </h4>
+                                <p class="text-gray-400 text-sm">
+                                    <span class="lang-th">ดึงข้อมูลจากเครือข่ายดาวเทียมชั้นนำ (เช่น Sentinel-1 และ Sentinel-2) ที่สแกนโลกอย่างต่อเนื่อง บันทึกภาพทั้งแบบเรดาร์ทะลุเมฆและหลายช่วงคลื่น</span>
+                                    <span class="lang-en">Extract data from leading satellite networks (like Sentinel-1 and Sentinel-2) that continuously scan the globe, capturing both cloud-penetrating radar and multispectral imagery.</span>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Step 2 -->
+                    <div class="relative flex md:justify-between items-center w-full md:even:flex-row-reverse group">
+                        <div class="hidden md:block w-5/12"></div>
+                        <div class="absolute left-6 md:left-1/2 -translate-x-1/2 w-10 h-10 rounded-full bg-deepspace border-2 border-neon-500 flex items-center justify-center z-10 group-hover:shadow-[0_0_15px_rgba(45,212,191,0.5)] transition-shadow">
+                            <span class="text-neon-400 font-bold">2</span>
+                        </div>
+                        <div class="w-full md:w-5/12 pl-20 md:pl-0 md:text-right">
+                            <div class="glass p-6 rounded-xl relative">
+                                <h4 class="text-xl font-semibold text-white mb-2">
+                                    <span class="lang-th">การประมวลผลข้อมูล</span>
+                                    <span class="lang-en">Data Processing</span>
+                                </h4>
+                                <p class="text-gray-400 text-sm">
+                                    <span class="lang-th">ข้อมูลดิบจะถูกดาวน์โหลดและประมวลผลทันทีผ่านระบบ Edge Computing และโครงสร้างคลาวด์ของเรา เพื่อทำความสะอาดและปรับเทียบสัญญาณ</span>
+                                    <span class="lang-en">Raw data is immediately downloaded and processed through our Edge Computing and cloud infrastructure to clean and calibrate the signals.</span>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Step 3 -->
+                    <div class="relative flex md:justify-between items-center w-full md:even:flex-row-reverse group">
+                        <div class="hidden md:block w-5/12"></div>
+                        <div class="absolute left-6 md:left-1/2 -translate-x-1/2 w-10 h-10 rounded-full bg-deepspace border-2 border-neon-500 flex items-center justify-center z-10 group-hover:shadow-[0_0_15px_rgba(45,212,191,0.5)] transition-shadow">
+                            <span class="text-neon-400 font-bold">3</span>
+                        </div>
+                        <div class="w-full md:w-5/12 pl-20 md:pl-0">
+                            <div class="glass p-6 rounded-xl relative">
+                                <h4 class="text-xl font-semibold text-white mb-2">
+                                    <span class="lang-th">การสร้างข้อมูลเชิงลึก</span>
+                                    <span class="lang-en">Insight Generation</span>
+                                </h4>
+                                <p class="text-gray-400 text-sm">
+                                    <span class="lang-th">โมเดล AI ขั้นสูงทำหน้าที่วิเคราะห์สัญญาณต่างๆ เพื่อตรวจหาสิ่งผิดปกติ วัดระดับความชื้น และตรวจจับองค์ประกอบทางเคมีที่สายตามนุษย์มองไม่เห็น</span>
+                                    <span class="lang-en">Advanced AI models analyze the signals to detect anomalies, measure moisture levels, and identify chemical compositions invisible to the human eye.</span>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Step 4 -->
+                    <div class="relative flex md:justify-between items-center w-full md:even:flex-row-reverse group">
+                        <div class="hidden md:block w-5/12"></div>
+                        <div class="absolute left-6 md:left-1/2 -translate-x-1/2 w-10 h-10 rounded-full bg-deepspace border-2 border-neon-500 flex items-center justify-center z-10 group-hover:shadow-[0_0_15px_rgba(45,212,191,0.5)] transition-shadow">
+                            <span class="text-neon-400 font-bold">4</span>
+                        </div>
+                        <div class="w-full md:w-5/12 pl-20 md:pl-0 md:text-right">
+                            <div class="glass p-6 rounded-xl relative">
+                                <h4 class="text-xl font-semibold text-white mb-2">
+                                    <span class="lang-th">การปรับแต่งและการแจ้งเตือน</span>
+                                    <span class="lang-en">Customization & Alerts</span>
+                                </h4>
+                                <p class="text-gray-400 text-sm">
+                                    <span class="lang-th">เชื่อมโยงข้อมูลเชิงลึกกับพื้นที่สนใจ (AOI) ของคุณ เกณฑ์เงื่อนไขที่กำหนดไว้จะกระตุ้นการแจ้งเตือนอัตโนมัติส่งตรงถึงระบบของคุณผ่าน API</span>
+                                    <span class="lang-en">Link insights to your Areas of Interest (AOI). Pre-defined thresholds will trigger automated alerts sent directly to your system via API.</span>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="applications" class="py-24 relative z-10 bg-deepspace border-t border-white/5">
+        <div class="max-w-7xl mx-auto px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <span class="text-neon-400 font-semibold tracking-wider text-sm uppercase">Use Cases</span>
+                <h2 class="text-3xl md:text-4xl font-bold mt-2 mb-4">
+                    <span class="lang-th">การนำไปประยุกต์ใช้งาน</span>
+                    <span class="lang-en">Practical Applications</span>
+                </h2>
+                <p class="text-gray-400 max-w-2xl mx-auto">
+                    <span class="lang-th">ขับเคลื่อนการตัดสินใจด้วยข้อมูลเชิงพื้นที่ เพื่อรับมือกับความท้าทายในหลากหลายอุตสาหกรรม</span>
+                    <span class="lang-en">Drive decision-making with spatial data to tackle challenges across various industries.</span>
+                </p>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <!-- Urban -->
+                <div class="glass rounded-2xl overflow-hidden group border border-white/10 hover:border-purple-400/40 transition-all duration-300">
+                    <div class="h-40 overflow-hidden relative">
+                        <img src="https://images.unsplash.com/photo-1449844908441-8829872d2607?q=80&w=600&auto=format&fit=crop" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" alt="Urban Development">
+                        <div class="absolute inset-0 bg-gradient-to-t from-darkpanel to-transparent opacity-90"></div>
+                        <i class="fa-solid fa-city absolute bottom-4 left-6 text-2xl text-purple-400"></i>
+                    </div>
+                    <div class="p-6 pt-3">
+                        <h3 class="text-xl font-bold text-white mb-2">
+                            <span class="lang-th">การพัฒนาเมือง</span>
+                            <span class="lang-en">Urban Development</span>
+                        </h3>
+                        <p class="text-gray-400 text-sm leading-relaxed">
+                            <span class="lang-th">ติดตามการขยายตัวของเมือง ตรวจสอบการใช้ที่ดิน และวางแผนโครงสร้างพื้นฐานเพื่อรองรับการเติบโตของประชากรอย่างยั่งยืน</span>
+                            <span class="lang-en">Monitor urban sprawl, inspect land use, and plan infrastructure to sustainably support population growth.</span>
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Disaster Management -->
+                <div class="glass rounded-2xl overflow-hidden group border border-white/10 hover:border-red-400/40 transition-all duration-300">
+                    <div class="h-40 overflow-hidden relative">
+                        <img src="https://images.unsplash.com/photo-1605810230434-7631ac76ec81?q=80&w=600&auto=format&fit=crop" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" alt="Disaster Management">
+                        <div class="absolute inset-0 bg-gradient-to-t from-darkpanel to-transparent opacity-90"></div>
+                        <i class="fa-solid fa-house-crack absolute bottom-4 left-6 text-2xl text-red-400"></i>
+                    </div>
+                    <div class="p-6 pt-3">
+                        <h3 class="text-xl font-bold text-white mb-2">
+                            <span class="lang-th">การจัดการภัยพิบัติ</span>
+                            <span class="lang-en">Disaster Management</span>
+                        </h3>
+                        <p class="text-gray-400 text-sm leading-relaxed">
+                            <span class="lang-th">ประเมินพื้นที่เสี่ยงภัย แจ้งเตือนเหตุน้ำท่วม ดินถล่ม หรือไฟป่าล่วงหน้า พร้อมประเมินความเสียหายหลังเกิดเหตุอย่างรวดเร็ว</span>
+                            <span class="lang-en">Assess risk zones, issue early warnings for floods, landslides, or wildfires, and conduct rapid post-disaster damage assessments.</span>
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Smart Agriculture -->
+                <div class="glass rounded-2xl overflow-hidden group border border-white/10 hover:border-yellow-400/40 transition-all duration-300">
+                    <div class="h-40 overflow-hidden relative">
+                        <img src="https://images.unsplash.com/photo-1625246333195-78d9c38ad449?q=80&w=600&auto=format&fit=crop" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" alt="Smart Agriculture">
+                        <div class="absolute inset-0 bg-gradient-to-t from-darkpanel to-transparent opacity-90"></div>
+                        <i class="fa-solid fa-wheat-awn absolute bottom-4 left-6 text-2xl text-yellow-400"></i>
+                    </div>
+                    <div class="p-6 pt-3">
+                        <h3 class="text-xl font-bold text-white mb-2">
+                            <span class="lang-th">การเกษตรแม่นยำ</span>
+                            <span class="lang-en">Smart Agriculture</span>
+                        </h3>
+                        <p class="text-gray-400 text-sm leading-relaxed">
+                            <span class="lang-th">วิเคราะห์สุขภาพพืชผล คาดการณ์ผลผลิต และบริหารจัดการทรัพยากรน้ำรวมถึงปุ๋ยเคมีอย่างมีประสิทธิภาพสูงสุด</span>
+                            <span class="lang-en">Analyze crop health, forecast yields, and manage water resources and fertilizers with maximum efficiency.</span>
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Environmental Monitoring -->
+                <div class="glass rounded-2xl overflow-hidden group border border-white/10 hover:border-teal-400/40 transition-all duration-300">
+                    <div class="h-40 overflow-hidden relative">
+                        <img src="https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?q=80&w=600&auto=format&fit=crop" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" alt="Environmental Monitoring">
+                        <div class="absolute inset-0 bg-gradient-to-t from-darkpanel to-transparent opacity-90"></div>
+                        <i class="fa-solid fa-tree absolute bottom-4 left-6 text-2xl text-teal-400"></i>
+                    </div>
+                    <div class="p-6 pt-3">
+                        <h3 class="text-xl font-bold text-white mb-2">
+                            <span class="lang-th">การติดตามสิ่งแวดล้อม</span>
+                            <span class="lang-en">Environmental Monitoring</span>
+                        </h3>
+                        <p class="text-gray-400 text-sm leading-relaxed">
+                            <span class="lang-th">เฝ้าระวังการเปลี่ยนแปลงสภาพภูมิอากาศ การตัดไม้ทำลายป่า และคุณภาพแหล่งน้ำ เพื่อปกป้องระบบนิเวศอย่างยั่งยืน</span>
+                            <span class="lang-en">Monitor climate change impacts, deforestation, and water quality to sustainably protect our ecosystems.</span>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="faq" class="py-24 relative z-10 bg-darkpanel/30">
+        <div class="max-w-3xl mx-auto px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl md:text-4xl font-bold mb-4">
+                    <span class="lang-th">คำถามที่พบบ่อย</span>
+                    <span class="lang-en">Frequently Asked Questions</span>
+                </h2>
+            </div>
+
+            <div class="space-y-4" id="faq-container">
+                <!-- FAQ Item 1 -->
+                <div class="glass rounded-lg overflow-hidden border border-white/10 hover:border-neon-400/30 transition-colors">
+                    <button class="faq-btn w-full px-6 py-5 text-left flex justify-between items-center focus:outline-none">
+                        <span class="font-medium text-lg text-white">
+                            <span class="lang-th">จำเป็นต้องกำหนดพื้นที่ความสนใจ (AOI) หรือไม่?</span>
+                            <span class="lang-en">Do I need to define an Area of Interest (AOI)?</span>
+                        </span>
+                        <i class="fa-solid fa-plus text-neon-400 transition-transform duration-300"></i>
+                    </button>
+                    <div class="accordion-content px-6 bg-white/5">
+                        <p class="text-gray-400 pb-5 text-sm leading-relaxed">
+                            <span class="lang-th">ใช่ และมันง่ายมาก คุณสามารถวาดรูปหลายเหลี่ยม (Polygon) บนแผนที่แบบอินเทอร์แอกทีฟของแพลตฟอร์มเรา หรือป้อนพิกัดมาตรฐานผ่าน API เพื่อกำหนดพื้นที่ที่คุณสนใจ (AOI) ระบบจะจัดการส่วนที่เหลือเองทั้งหมด</span>
+                            <span class="lang-en">Yes, and it is very simple. You can draw a polygon on our interactive map or input standard coordinates via API to define your AOI. The system handles the rest.</span>
+                        </p>
+                    </div>
+                </div>
+
+                <!-- FAQ Item 2 -->
+                <div class="glass rounded-lg overflow-hidden border border-white/10 hover:border-neon-400/30 transition-colors">
+                    <button class="faq-btn w-full px-6 py-5 text-left flex justify-between items-center focus:outline-none">
+                        <span class="font-medium text-lg text-white">
+                            <span class="lang-th">ฉันต้องสั่งการดาวเทียมเองหรือไม่?</span>
+                            <span class="lang-en">Do I have to task the satellites manually?</span>
+                        </span>
+                        <i class="fa-solid fa-plus text-neon-400 transition-transform duration-300"></i>
+                    </button>
+                    <div class="accordion-content px-6 bg-white/5">
+                        <p class="text-gray-400 pb-5 text-sm leading-relaxed">
+                            <span class="lang-th">ไม่จำเป็น แตกต่างจากรูปแบบดาวเทียมดั้งเดิมที่คุณต้องร้องขอและรอให้ดาวเทียมโคจรผ่าน ระบบของเรารวบรวมและจัดการข้อมูลจากดาวเทียมทั่วโลกอย่างต่อเนื่อง คุณเพียงแค่สมัครรับข้อมูลสตรีมในภูมิภาคที่คุณต้องการ</span>
+                            <span class="lang-en">No. Unlike traditional models where you must request and wait for a satellite pass, our system continuously gathers and manages data globally. You just subscribe to the data stream in your desired region.</span>
+                        </p>
+                    </div>
+                </div>
+
+                <!-- FAQ Item 3 -->
+                <div class="glass rounded-lg overflow-hidden border border-white/10 hover:border-neon-400/30 transition-colors">
+                    <button class="faq-btn w-full px-6 py-5 text-left flex justify-between items-center focus:outline-none">
+                        <span class="font-medium text-lg text-white">
+                            <span class="lang-th">ข้อมูลเชิงลึกมีความน่าเชื่อถือแค่ไหน?</span>
+                            <span class="lang-en">How reliable are the insights?</span>
+                        </span>
+                        <i class="fa-solid fa-plus text-neon-400 transition-transform duration-300"></i>
+                    </button>
+                    <div class="accordion-content px-6 bg-white/5">
+                        <p class="text-gray-400 pb-5 text-sm leading-relaxed">
+                            <span class="lang-th">เราให้ผลลัพธ์ที่มีความมั่นใจสูงโดยการผสานข้อมูลที่หลากหลาย (เช่น SAR จาก Sentinel-1, ภาพถ่ายหลายช่วงคลื่นจาก Sentinel-2) โมเดล AI ของเราได้รับการฝึกฝนและตรวจสอบกับข้อมูลจริงภาคพื้นดินอย่างต่อเนื่อง เพื่อความถูกต้องสูงสุด</span>
+                            <span class="lang-en">We provide high-confidence results by fusing multi-source data (e.g., SAR from Sentinel-1, multispectral from Sentinel-2). Our AI models are continuously trained and validated against ground-truth data for maximum accuracy.</span>
+                        </p>
+                    </div>
+                </div>
+                
+                <!-- FAQ Item 4 -->
+                <div class="glass rounded-lg overflow-hidden border border-white/10 hover:border-neon-400/30 transition-colors">
+                    <button class="faq-btn w-full px-6 py-5 text-left flex justify-between items-center focus:outline-none">
+                        <span class="font-medium text-lg text-white">
+                            <span class="lang-th">"เกือบเรียลไทม์" คือเร็วแค่ไหน?</span>
+                            <span class="lang-en">How fast is "Near Real-Time"?</span>
+                        </span>
+                        <i class="fa-solid fa-plus text-neon-400 transition-transform duration-300"></i>
+                    </button>
+                    <div class="accordion-content px-6 bg-white/5">
+                        <p class="text-gray-400 pb-5 text-sm leading-relaxed">
+                            <span class="lang-th">ทันทีที่เซนเซอร์ได้รับข้อมูล ระบบดาวน์โหลดและประมวลผลที่ปรับแต่งพิเศษของเราจะส่งข้อมูลเชิงลึกที่นำไปใช้ได้จริงสู่แดชบอร์ดหรือ API ของคุณภายในเวลาไม่กี่นาที ซึ่งลดความหน่วงจากมาตรฐานเดิมของอุตสาหกรรมลงอย่างมาก</span>
+                            <span class="lang-en">As soon as sensors acquire the data, our custom-built download and processing pipeline delivers actionable insights to your dashboard or API within minutes, significantly reducing industry-standard latency.</span>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer class="bg-darkpanel border-t border-white/5 pt-16 pb-8">
+        <div class="max-w-7xl mx-auto px-6 lg:px-8">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-12 mb-12">
+                <div class="col-span-1 md:col-span-1">
+                    <div class="flex items-center gap-2 mb-4">
+                        <div class="w-6 h-6 rounded bg-gradient-to-br from-neon-400 to-blue-600 flex items-center justify-center">
+                            <i class="fa-solid fa-cube text-deepspace font-bold text-xs"></i>
+                        </div>
+                        <span class="font-bold text-lg tracking-wide text-white">GIS Eye Cube</span>
+                    </div>
+                    <p class="text-gray-500 text-sm mb-6">
+                        <span class="lang-th">ถอดรหัสโลกใบนี้ เพื่อปกป้องอนาคตของเรา</span>
+                        <span class="lang-en">Decoding the planet to protect our future.</span>
+                    </p>
+                    <div class="flex gap-4">
+                        <a href="#" class="text-gray-400 hover:text-neon-400 transition-colors"><i class="fa-brands fa-twitter"></i></a>
+                        <a href="#" class="text-gray-400 hover:text-neon-400 transition-colors"><i class="fa-brands fa-linkedin-in"></i></a>
+                        <a href="#" class="text-gray-400 hover:text-neon-400 transition-colors"><i class="fa-brands fa-github"></i></a>
+                    </div>
+                </div>
+                
+                <div>
+                    <h4 class="text-white font-semibold mb-4">
+                        <span class="lang-th">แพลตฟอร์ม</span><span class="lang-en">Platform</span>
+                    </h4>
+                    <ul class="space-y-2 text-sm text-gray-400">
+                        <li><a href="#" class="hover:text-neon-400 transition-colors"><span class="lang-th">เทคโนโลยี</span><span class="lang-en">Technology</span></a></li>
+                        <li><a href="#" class="hover:text-neon-400 transition-colors"><span class="lang-th">ผลิตภัณฑ์ข้อมูล</span><span class="lang-en">Data Products</span></a></li>
+                        <li><a href="#" class="hover:text-neon-400 transition-colors"><span class="lang-th">เอกสาร API</span><span class="lang-en">API Documentation</span></a></li>
+                        <li><a href="#" class="hover:text-neon-400 transition-colors"><span class="lang-th">ความปลอดภัย</span><span class="lang-en">Security</span></a></li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h4 class="text-white font-semibold mb-4">
+                        <span class="lang-th">โซลูชัน</span><span class="lang-en">Solutions</span>
+                    </h4>
+                    <ul class="space-y-2 text-sm text-gray-400">
+                        <li><a href="#" class="hover:text-neon-400 transition-colors"><span class="lang-th">การป้องกันและข่าวกรอง</span><span class="lang-en">Defense & Intelligence</span></a></li>
+                        <li><a href="#" class="hover:text-neon-400 transition-colors"><span class="lang-th">การเกษตรอัจฉริยะ</span><span class="lang-en">Smart Agriculture</span></a></li>
+                        <li><a href="#" class="hover:text-neon-400 transition-colors"><span class="lang-th">ติดตามสภาพอากาศ</span><span class="lang-en">Climate Monitoring</span></a></li>
+                        <li><a href="#" class="hover:text-neon-400 transition-colors"><span class="lang-th">การเดินเรือทะเล</span><span class="lang-en">Maritime</span></a></li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h4 class="text-white font-semibold mb-4">
+                        <span class="lang-th">องค์กร</span><span class="lang-en">Company</span>
+                    </h4>
+                    <ul class="space-y-2 text-sm text-gray-400">
+                        <li><a href="#" class="hover:text-neon-400 transition-colors"><span class="lang-th">เกี่ยวกับเรา</span><span class="lang-en">About Us</span></a></li>
+                        <li><a href="#" class="hover:text-neon-400 transition-colors"><span class="lang-th">ร่วมงานกับเรา</span><span class="lang-en">Careers</span></a></li>
+                        <li><a href="#" class="hover:text-neon-400 transition-colors"><span class="lang-th">ข่าวสาร</span><span class="lang-en">News</span></a></li>
+                        <li><a href="#" class="hover:text-neon-400 transition-colors"><span class="lang-th">ติดต่อเรา</span><span class="lang-en">Contact</span></a></li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="border-t border-white/5 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
+                <p class="text-gray-500 text-sm">
+                    &copy; 2026 GIS Eye Cube. <span class="lang-th">สงวนลิขสิทธิ์ทั้งหมด</span><span class="lang-en">All rights reserved.</span>
+                </p>
+                <div class="flex gap-6 text-sm text-gray-500">
+                    <a href="#" class="hover:text-white transition-colors">
+                        <span class="lang-th">นโยบายความเป็นส่วนตัว</span><span class="lang-en">Privacy Policy</span>
+                    </a>
+                    <a href="#" class="hover:text-white transition-colors">
+                        <span class="lang-th">ข้อกำหนดการให้บริการ</span><span class="lang-en">Terms of Service</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Header scroll effect
+        const navbar = document.getElementById('navbar');
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 20) {
+                navbar.classList.add('glass', 'border-b', 'border-white/10');
+            } else {
+                navbar.classList.remove('glass', 'border-b', 'border-white/10');
+            }
+        });
+
+        // FAQ Accordion Logic
+        const faqButtons = document.querySelectorAll('.faq-btn');
+        faqButtons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const content = btn.nextElementSibling;
+                const icon = btn.querySelector('i');
+                const isCurrentlyActive = content.classList.contains('active');
+
+                document.querySelectorAll('.accordion-content').forEach(c => c.classList.remove('active'));
+                document.querySelectorAll('.faq-btn i').forEach(i => {
+                    i.classList.remove('fa-minus');
+                    i.classList.add('fa-plus');
+                    i.style.transform = 'rotate(0deg)';
+                });
+
+                if (!isCurrentlyActive) {
+                    content.classList.add('active');
+                    icon.classList.remove('fa-plus');
+                    icon.classList.add('fa-minus');
+                    icon.style.transform = 'rotate(180deg)';
+                }
+            });
+        });
+
+        // Language Toggle Logic
+        function toggleLanguage() {
+            const body = document.body;
+            if (body.classList.contains('lang-th')) {
+                body.classList.remove('lang-th');
+                body.classList.add('lang-en');
+                document.documentElement.lang = 'en';
+            } else {
+                body.classList.remove('lang-en');
+                body.classList.add('lang-th');
+                document.documentElement.lang = 'th';
+            }
+        }
+
+        document.getElementById('langToggle').addEventListener('click', toggleLanguage);
+        document.getElementById('langToggleMobile').addEventListener('click', toggleLanguage);
+    </script>
+</body>
+</html>
